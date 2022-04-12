@@ -31,6 +31,7 @@ public class MooltipassBleManager: NSObject { // 1.
 
     var currentId: Int = 0
     var retryCount: Int = 0
+    var expectedPacketCount: Int? = nil
     var readResult: [Data]? = nil
 
     var flushData: Data? = nil
@@ -45,6 +46,9 @@ public class MooltipassBleManager: NSObject { // 1.
     
     var bluetoothAvailable = false
     var connectedCallback: (() -> Void)?
+    
+    let queue = DispatchQueue(label: "com.themooltipass.bluetoothQueue", attributes: .concurrent)
+    let semaphore = DispatchSemaphore(value: 1)
     
     public override init() {
         super.init()
@@ -99,5 +103,10 @@ public class MooltipassBleManager: NSObject { // 1.
             debugPrint("Got Peripheral, connecting")
             self.connect()
         }
+    }
+    
+    func releaseSemaphore() {
+        debugPrint("Semaphore Released")
+        semaphore.signal()
     }
 }
