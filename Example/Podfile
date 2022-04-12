@@ -1,0 +1,7 @@
+use_frameworks!
+target 'MooltipassBle_Tests' do
+  pod 'MooltipassBle', :path => '../'
+  
+  pod 'Quick', '~> 2.2.0'
+    pod 'Nimble', '~> 8.0.7'
+end
