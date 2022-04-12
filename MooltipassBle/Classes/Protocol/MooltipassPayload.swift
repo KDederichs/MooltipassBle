@@ -56,15 +56,15 @@ extension MooltipassBleManager {
             BleMessageFactory.arrayCopy(bytes: &bytes, data: login!, start: 4 + loginOffset)
         }
         self.peripheral?.writeValue(FLIP_BIT_RESET_PACKET, for: writeCharacteristic!, type: .withoutResponse)
-        flushRead {
+        prepareRead {
             self.send(packets: factory.serialize(msg: MooltipassMessage(cmd: MooltipassCommand.GET_CREDENTIAL_BLE, rawData: bytes)))
         }
     }
 
-    public func flushRead(completion: @escaping () -> ()) {
-        flushing = true
+    public func prepareRead(completion: @escaping () -> ()) {
         flushCompleteHandler = completion
-        startRead();
+        retryCount = 0
+        completion()
     }
 
     private func send(packets: [Data]) {

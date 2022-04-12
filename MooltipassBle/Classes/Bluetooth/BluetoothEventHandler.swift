@@ -53,48 +53,26 @@ extension MooltipassBleManager: CBPeripheralDelegate {
 
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let data = characteristic.value {
-            if (flushing) {
-                if (flushData == nil) {
-                    flushData = data;
-                    debugPrint("Flush: Read for nil Data")
-                    startRead()
-                } else {
-                    if (!flushData!.elementsEqual(data)) {
-                        flushData = data
-                        debugPrint("Flush: Read for missmatch")
-                        startRead()
-                    } else {
-                        debugPrint("Flush complete")
-                        flushing = false
-                        flushData = nil
-                        resetState(clearRetryCount: false)
-                        flushCompleteHandler()
-                    }
-                }
-            } else {
-                //print("didUpdateValueFor \(characteristic.uuid.uuidString) = count: \(data.count) | \(self.hexEncodedString(data))")
-                let numberOfPackets = (data[1] % 16) + 1
-                let id = Int(data[1]) >> 4
-                print("Reading package \(id + 1) of \(numberOfPackets) (current ID is \(currentId))")
-                debugPrint(hexEncodedString(data))
-
+            let numberOfPackets = (data[1] % 16) + 1
+            let id = Int(data[1]) >> 4
+            print("Package \(id) of \(numberOfPackets):")
+            debugPrint(hexEncodedString(data))
+            if (currentId == id) {
                 if (readResult == nil) {
                     readResult = [Data](repeating: Data([0]), count: Int(numberOfPackets))
                 }
-                if (currentId != id) {
-                    debugPrint("Received ID \(id) doesn't match with current ID counter \(currentId)")
-                    resetState()
-                    return
-                }
                 readResult![currentId] = data
-                if (currentId == numberOfPackets - 1) {
+                currentId += 1
+                if (id != numberOfPackets - 1) {
+                    print("ReadMore")
+                    //startRead()
+                } else {
+                    print("Finished Reading")
                     handleResult()
                     resetState()
-                    return
-                } else {
-                    currentId += 1
-                    startRead()
                 }
+            } else {
+                print("CurrentId \(currentId) doesn't match \(id), skipping")
             }
         } else {
             print("didUpdateValueFor \(characteristic.uuid.uuidString) with no data")
@@ -148,10 +126,10 @@ extension MooltipassBleManager: CBPeripheralDelegate {
             resetState()
             break
         case .PLEASE_RETRY_BLE:
-            if (retryCount < 5) {
+            if (retryCount < 10) {
                 debugPrint("Retrying operation")
                 retryCount += 1
-                flushRead(completion: flushCompleteHandler)
+                flushCompleteHandler()
             } else {
                 resetState()
                 self.delegate?.onError(errorMessage: "Could not read from Mooltipass")
@@ -180,9 +158,6 @@ extension MooltipassBleManager: CBPeripheralDelegate {
 
     private func resetState(clearRetryCount: Bool = true) {
         currentId = 0
-        if (clearRetryCount) {
-            retryCount = 0
-        }
         readResult = nil
     }
 }
