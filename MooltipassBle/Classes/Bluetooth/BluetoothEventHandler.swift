@@ -43,6 +43,10 @@ extension MooltipassBleManager: CBPeripheralDelegate {
             }
             if (readConnected && writeConnected) {
                 self.delegate?.mooltipassConnected()
+                if (connectedCallback != nil) {
+                    connectedCallback!()
+                    connectedCallback = nil
+                }
             }
         }
     }

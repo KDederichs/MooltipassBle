@@ -43,6 +43,9 @@ public class MooltipassBleManager: NSObject { // 1.
     var readConnected = false
     var writeConnected = false
     
+    var bluetoothAvailable = false
+    var connectedCallback: (() -> Void)?
+    
     public override init() {
         super.init()
         self.centralManager = CBCentralManager(delegate: self, queue: nil)
@@ -80,5 +83,21 @@ public class MooltipassBleManager: NSObject { // 1.
     func disconnect() {
         guard let peripheral = self.peripheral else { return }
         self.centralManager.cancelPeripheralConnection(peripheral)
+    }
+    
+    func connectToMooltipass(callback: (() -> Void)?) {
+        connectedCallback = callback
+        if (writeConnected && readConnected) {
+            if (connectedCallback != nil) {
+                connectedCallback!()
+                connectedCallback = nil
+            }
+            return
+        }
+        let possibleConnection = checkForConnected();
+        if (possibleConnection != nil) {
+            debugPrint("Got Peripheral, connecting")
+            self.connect()
+        }
     }
 }

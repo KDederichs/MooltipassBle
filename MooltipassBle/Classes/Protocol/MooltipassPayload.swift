@@ -9,8 +9,10 @@ extension MooltipassBleManager {
 
     public func getStatus() {
         let factory = BleMessageFactory()
-        self.peripheral?.writeValue(FLIP_BIT_RESET_PACKET, for: writeCharacteristic!, type: .withoutResponse)
-        self.send(packets: factory.serialize(msg: MooltipassMessage(cmd: MooltipassCommand.MOOLTIPASS_STATUS_BLE)))
+        connectToMooltipass {
+            self.peripheral?.writeValue(self.FLIP_BIT_RESET_PACKET, for: self.writeCharacteristic!, type: .withoutResponse)
+            self.send(packets: factory.serialize(msg: MooltipassMessage(cmd: MooltipassCommand.MOOLTIPASS_STATUS_BLE)))
+        }
     }
 
     public func getCredentials(service: String, login: String?) {
@@ -19,7 +21,9 @@ extension MooltipassBleManager {
         if (login != nil) {
             loginData = _stringToUInt8LEData(input: login!)
         }
-        _getCredentials(service: serviceData, login: loginData)
+        connectToMooltipass {
+            self._getCredentials(service: serviceData, login: loginData)
+        }
     }
 
     public func startRead() {

@@ -13,23 +13,12 @@ extension MooltipassBleManager: CBCentralManagerDelegate {
         self.delegate?.bluetoothChange(state: central.state)
         if central.state != .poweredOn {
             print("bluetooth is OFF (\(central.state.rawValue))")
+            bluetoothAvailable = false
             disconnect()
         } else {
             print("bluetooth is ON")
-            let possibleConnection = checkForConnected();
-            if (possibleConnection != nil) {
-                debugPrint("Got Peripheral, connecting")
-                guard centralManager.state == .poweredOn else {
-                    print("bluetooth is off")
-                    return
-                }
-                if (nil == peripheral) {
-                    print("No Peripheral")
-                    self.delegate?.onError(errorMessage: "No Mooltipass found")
-                    return
-                }
-                centralManager.connect(peripheral!)
-            }
+            bluetoothAvailable = true
+
         }
     }
 
