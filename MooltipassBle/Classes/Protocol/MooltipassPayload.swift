@@ -31,13 +31,7 @@ extension MooltipassBleManager {
             debugPrint("Attempted to read to device while not connected, aborting")
             return
         }
-        print("Start Read was called")
-        queue.async {
-            if (self.peripheral != nil) {
-                self.semaphore.wait()
-                self.peripheral?.readValue(for: self.readCharacteristic!)
-            }
-        }
+        peripheral?.readValue(for: readCharacteristic!)
     }
 
     public func tryParseLocked(message: MooltipassMessage) -> Bool? {

@@ -53,38 +53,51 @@ extension MooltipassBleManager: CBPeripheralDelegate {
 
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let data = characteristic.value {
-            handleFlush(data: data)
-            //print("didUpdateValueFor \(characteristic.uuid.uuidString) = count: \(data.count) | \(self.hexEncodedString(data))")
-            let id = Int(data[1]) >> 4
-            if (currentId == id) {
-                if (nil == expectedPacketCount && 0 == id) {
-                    expectedPacketCount = Int((data[1] % 16) + 1)
-                }
-                print("Reading package \(id + 1) of \(expectedPacketCount) (current ID is \(currentId))")
-                debugPrint(hexEncodedString(data))
-                
-                if (readResult == nil) {
-                    readResult = [Data](repeating: Data([0]), count: expectedPacketCount!)
-                }
-                
-                readResult![currentId] = data
-                if (currentId == expectedPacketCount! - 1) {
-                    handleResult()
-                    resetState()
-                } else {
-                    currentId += 1
-                    releaseSemaphore()
+            if (flushing) {
+                if (flushData == nil) {
+                    flushData = data;
+                    debugPrint("Flush: Read for nil Data")
                     startRead()
+                } else {
+                    if (!flushData!.elementsEqual(data)) {
+                        flushData = data
+                        debugPrint("Flush: Read for missmatch")
+                        startRead()
+                    } else {
+                        debugPrint("Flush complete")
+                        flushing = false
+                        flushData = nil
+                        resetState(clearRetryCount: false)
+                        flushCompleteHandler()
+                    }
                 }
             } else {
-                debugPrint("Received ID \(id) doesn't match with current ID counter \(currentId)")
-                resetState()
-                releaseSemaphore()
-            }
+                //print("didUpdateValueFor \(characteristic.uuid.uuidString) = count: \(data.count) | \(self.hexEncodedString(data))")
+                let numberOfPackets = (data[1] % 16) + 1
+                let id = Int(data[1]) >> 4
+                print("Reading package \(id + 1) of \(numberOfPackets) (current ID is \(currentId))")
+                debugPrint(hexEncodedString(data))
 
+                if (readResult == nil) {
+                    readResult = [Data](repeating: Data([0]), count: Int(numberOfPackets))
+                }
+                if (currentId != id) {
+                    debugPrint("Received ID \(id) doesn't match with current ID counter \(currentId)")
+                    resetState()
+                    return
+                }
+                readResult![currentId] = data
+                if (currentId == numberOfPackets - 1) {
+                    handleResult()
+                    resetState()
+                    return
+                } else {
+                    currentId += 1
+                    startRead()
+                }
+            }
         } else {
             print("didUpdateValueFor \(characteristic.uuid.uuidString) with no data")
-            releaseSemaphore()
         }
     }
 
@@ -108,7 +121,6 @@ extension MooltipassBleManager: CBPeripheralDelegate {
         if (message == nil) {
             debugPrint("Result could not be parsed!")
             resetState()
-            releaseSemaphore()
             return
         }
 
@@ -149,7 +161,6 @@ extension MooltipassBleManager: CBPeripheralDelegate {
             resetState()
             break
         }
-        releaseSemaphore()
     }
 
     private func parseCredentialsPart(idx: Int, data: Data) -> String? {
@@ -173,31 +184,5 @@ extension MooltipassBleManager: CBPeripheralDelegate {
             retryCount = 0
         }
         readResult = nil
-    }
-    
-    private func handleFlush(data: Data) {
-        if (!flushing) {
-            return;
-        }
-        if (flushData == nil) {
-            flushData = data;
-            debugPrint("Flush: Read for nil Data")
-            releaseSemaphore()
-            startRead()
-        } else {
-            if (!flushData!.elementsEqual(data)) {
-                flushData = data
-                debugPrint("Flush: Read for missmatch")
-                releaseSemaphore()
-                startRead()
-            } else {
-                debugPrint("Flush complete")
-                flushing = false
-                flushData = nil
-                resetState(clearRetryCount: false)
-                releaseSemaphore()
-                flushCompleteHandler()
-            }
-        }
     }
 }
