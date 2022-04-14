@@ -129,7 +129,9 @@ extension MooltipassBleManager: CBPeripheralDelegate {
             if (retryCount < 10) {
                 debugPrint("Retrying operation")
                 retryCount += 1
-                flushCompleteHandler()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    self.flushCompleteHandler()
+                }
             } else {
                 resetState()
                 self.delegate?.onError(errorMessage: "Could not read from Mooltipass")

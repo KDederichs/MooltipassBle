@@ -8,8 +8,8 @@ import CoreBluetooth
 extension MooltipassBleManager {
 
     public func getStatus() {
-        let factory = BleMessageFactory()
         connectToMooltipass {
+            let factory = BleMessageFactory()
             self.peripheral?.writeValue(self.FLIP_BIT_RESET_PACKET, for: self.writeCharacteristic!, type: .withoutResponse)
             self.send(packets: factory.serialize(msg: MooltipassMessage(cmd: MooltipassCommand.MOOLTIPASS_STATUS_BLE)))
         }
@@ -44,19 +44,19 @@ extension MooltipassBleManager {
     // Low Level device communication
 
     private func _getCredentials(service: Data, login: Data?) {
-        let factory = BleMessageFactory()
-
-        let loginOffset = service.count
-        let len = loginOffset + (login?.count ?? 0) + 4
-        var bytes = Data(count: len)
-        BleMessageFactory.toUInt8LE(bytes: &bytes, index: 0, value: 0)
-        BleMessageFactory.toUInt8LE(bytes: &bytes, index: 2, value: login != nil ? UInt16(loginOffset / 2) : 65535)
-        BleMessageFactory.arrayCopy(bytes: &bytes, data: service, start: 4)
-        if(login != nil) {
-            BleMessageFactory.arrayCopy(bytes: &bytes, data: login!, start: 4 + loginOffset)
-        }
-        self.peripheral?.writeValue(FLIP_BIT_RESET_PACKET, for: writeCharacteristic!, type: .withoutResponse)
         prepareRead {
+            let factory = BleMessageFactory()
+
+            let loginOffset = service.count
+            let len = loginOffset + (login?.count ?? 0) + 4
+            var bytes = Data(count: len)
+            BleMessageFactory.toUInt8LE(bytes: &bytes, index: 0, value: 0)
+            BleMessageFactory.toUInt8LE(bytes: &bytes, index: 2, value: login != nil ? UInt16(loginOffset / 2) : 65535)
+            BleMessageFactory.arrayCopy(bytes: &bytes, data: service, start: 4)
+            if(login != nil) {
+                BleMessageFactory.arrayCopy(bytes: &bytes, data: login!, start: 4 + loginOffset)
+            }
+            self.peripheral?.writeValue(self.FLIP_BIT_RESET_PACKET, for: self.writeCharacteristic!, type: .withoutResponse)
             self.send(packets: factory.serialize(msg: MooltipassMessage(cmd: MooltipassCommand.GET_CREDENTIAL_BLE, rawData: bytes)))
         }
     }
