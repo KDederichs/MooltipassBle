@@ -40,6 +40,11 @@ extension MooltipassBleManager {
         }
         return nil
     }
+    
+    public func startFlush() {
+        flushing = true
+        startRead()
+    }
 
     // Low Level device communication
 
@@ -64,7 +69,8 @@ extension MooltipassBleManager {
     public func prepareRead(completion: @escaping () -> ()) {
         flushCompleteHandler = completion
         retryCount = 0
-        completion()
+        startFlush()
+        //completion()
     }
 
     private func send(packets: [Data]) {

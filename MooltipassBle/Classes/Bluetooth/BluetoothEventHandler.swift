@@ -53,26 +53,41 @@ extension MooltipassBleManager: CBPeripheralDelegate {
 
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let data = characteristic.value {
-            let numberOfPackets = (data[1] % 16) + 1
-            let id = Int(data[1]) >> 4
-            print("Package \(id) of \(numberOfPackets):")
-            debugPrint(hexEncodedString(data))
-            if (currentId == id) {
-                if (readResult == nil) {
-                    readResult = [Data](repeating: Data([0]), count: Int(numberOfPackets))
-                }
-                readResult![currentId] = data
-                currentId += 1
-                if (id != numberOfPackets - 1) {
-                    print("ReadMore")
-                    //startRead()
+            if (flushing) {
+                print("Flushing Data:")
+                print(hexEncodedString(data))
+                if (flushData == nil || !data.elementsEqual(flushData!))
+                {
+                    flushData = data
+                    self.startRead()
                 } else {
-                    print("Finished Reading")
-                    handleResult()
-                    resetState()
+                    print("Flushing: Complete")
+                    flushing = false
+                    flushData = nil
+                    self.flushCompleteHandler()
                 }
             } else {
-                print("CurrentId \(currentId) doesn't match \(id), skipping")
+                let numberOfPackets = (data[1] % 16) + 1
+                let id = Int(data[1]) >> 4
+                print("Package \(id) of \(numberOfPackets):")
+                debugPrint(hexEncodedString(data))
+                if (currentId == id) {
+                    if (readResult == nil) {
+                        readResult = [Data](repeating: Data([0]), count: Int(numberOfPackets))
+                    }
+                    readResult![currentId] = data
+                    currentId += 1
+                    if (id != numberOfPackets - 1) {
+                        print("ReadMore")
+                        //startRead()
+                    } else {
+                        print("Finished Reading")
+                        handleResult()
+                        resetState()
+                    }
+                } else {
+                    print("CurrentId \(currentId) doesn't match \(id), skipping")
+                }
             }
         } else {
             print("didUpdateValueFor \(characteristic.uuid.uuidString) with no data")
@@ -118,7 +133,7 @@ extension MooltipassBleManager: CBPeripheralDelegate {
                 let username = parseCredentialsPart(idx: 0, data: message!.data!)
                 let password = parseCredentialsPart(idx: 6, data: message!.data!)
                 if (username != nil && password != nil) {
-                    self.delegate?.credentialsReceived(username: username!, password: password!)
+                    self.delegate?.credentialsReceived(credential: MooltipassCredential(username: username!, password: password!))
                 } else {
                     self.delegate?.onError(errorMessage: "Error decoding credentials")
                 }
@@ -130,7 +145,10 @@ extension MooltipassBleManager: CBPeripheralDelegate {
                 debugPrint("Retrying operation")
                 retryCount += 1
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    self.flushCompleteHandler()
+                    self.resetState()
+                    self.prepareRead(completion: self.flushCompleteHandler)
+                    //self.flushCompleteHandler()
+                    //self.startRead()
                 }
             } else {
                 resetState()
@@ -160,6 +178,9 @@ extension MooltipassBleManager: CBPeripheralDelegate {
 
     private func resetState(clearRetryCount: Bool = true) {
         currentId = 0
+        if (clearRetryCount) {
+            retryCount = 0
+        }
         readResult = nil
     }
 }

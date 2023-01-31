@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'MooltipassBle'
-  s.version          = '0.1.1'
+  s.version          = '0.1.2'
   s.summary          = 'A Swift library to interface with the Mooltipass BLE'
 
 # This description is used to generate tags and improve search results.
@@ -28,7 +28,7 @@ Implementation of the Mooltipass BLE Protocol in Swift using native CoreBluetoot
   s.source           = { :git => 'https://github.com/KDederichs/MooltipassBle.git', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '11.0'
 
   s.source_files = 'MooltipassBle/Classes/**/*'
   

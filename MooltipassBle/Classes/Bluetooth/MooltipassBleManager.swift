@@ -52,11 +52,15 @@ public class MooltipassBleManager: NSObject { // 1.
     }
 
     func checkForConnected() -> CBPeripheral? {
+        print("Checking for Connected Device:")
         let alreadyConnected = centralManager.retrieveConnectedPeripherals(withServices: [commServiceUUID])
-        if (alreadyConnected.count > 0 && alreadyConnected[0].name == "Mooltipass BLE") {
+        if (alreadyConnected.count > 0) {
+            print("Found")
             self.peripheral = alreadyConnected[0]
             return self.peripheral
         }
+        print("Not Found")
+        self.delegate?.onError(errorMessage: "Device is not connected")
         return nil
     }
 
