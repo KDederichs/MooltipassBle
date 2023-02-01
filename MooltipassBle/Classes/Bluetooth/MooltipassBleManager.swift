@@ -57,10 +57,11 @@ public class MooltipassBleManager: NSObject { // 1.
         if (alreadyConnected.count > 0) {
             print("Found")
             self.peripheral = alreadyConnected[0]
+            self.delegate?.mooltipassConnected(connected: true)
             return self.peripheral
         }
         print("Not Found")
-        self.delegate?.onError(errorMessage: "Device is not connected")
+        self.delegate?.mooltipassConnected(connected: false)
         return nil
     }
 

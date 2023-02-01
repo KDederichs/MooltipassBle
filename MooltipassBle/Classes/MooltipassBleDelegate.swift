@@ -13,5 +13,5 @@ public protocol MooltipassBleDelegate : AnyObject {
     func onError(errorMessage: String) -> Void
     func lockedStatus(locked: Bool) -> Void
     func credentialsReceived(credential: MooltipassCredential?) -> Void
-    func mooltipassConnected() -> Void
-}
+    func mooltipassConnected(connected: Bool) -> Void
+    func mooltipassReady() -> Void

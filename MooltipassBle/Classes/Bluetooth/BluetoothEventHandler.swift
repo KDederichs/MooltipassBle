@@ -42,7 +42,7 @@ extension MooltipassBleManager: CBPeripheralDelegate {
                 readConnected = true
             }
             if (readConnected && writeConnected) {
-                self.delegate?.mooltipassConnected()
+                self.delegate?.mooltipassReady()
                 if (connectedCallback != nil) {
                     connectedCallback!()
                     connectedCallback = nil
