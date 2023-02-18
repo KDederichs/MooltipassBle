@@ -137,6 +137,8 @@ extension MooltipassBleManager: CBPeripheralDelegate {
                 } else {
                     self.delegate?.onError(errorMessage: "Error decoding credentials")
                 }
+            } else if(message?.data != nil && message!.data!.count == 0) {
+                self.delegate?.credentialNotFound()
             }
             resetState()
             break

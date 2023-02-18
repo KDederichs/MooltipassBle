@@ -12,6 +12,8 @@ public protocol MooltipassBleDelegate : AnyObject {
     func bluetoothChange(state: CBManagerState)-> Void
     func onError(errorMessage: String) -> Void
     func lockedStatus(locked: Bool) -> Void
+    func credentialNotFound() -> Void
     func credentialsReceived(credential: MooltipassCredential?) -> Void
     func mooltipassConnected(connected: Bool) -> Void
     func mooltipassReady() -> Void
+}
