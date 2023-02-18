@@ -16,7 +16,7 @@ extension MooltipassBleManager {
     }
 
     public func getCredentials(service: String, login: String?) {
-        let serviceData = _stringToUInt8LEData(input: service)
+        let serviceData = _stringToUInt8LEData(input: service.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: ""))
         var loginData : Data? = nil
         if (login != nil) {
             loginData = _stringToUInt8LEData(input: login!)
