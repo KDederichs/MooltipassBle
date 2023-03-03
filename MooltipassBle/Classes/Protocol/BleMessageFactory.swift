@@ -40,9 +40,8 @@ public class BleMessageFactory: MessageFactory {
             print("Chunk bytes nil")
             return [Data([0])]
         }
-//        debugPrint("Pre chunk size \(bytes?.count)")
-        return (0...((bytes!.count - 1) / chunkSize)).map {
-            bytes![$0 * chunkSize...min(bytes!.count - 1, ($0 + 1) * chunkSize)]
+        return stride(from: 0, to: bytes!.count, by: chunkSize).map {
+            Data(bytes![$0..<min($0 + chunkSize, bytes!.count)])
         }
     }
 
